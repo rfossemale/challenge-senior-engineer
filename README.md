@@ -30,7 +30,7 @@ The task involves enhancing the **Todo API** implementation with a synchronizati
    - Provide detailed logs for debugging synchronization issues.
 
 5. **Document Design Decisions**:
-   - Document your design choices, trade-offs, and assumptions in a `NOTES.txt` file.
+   - Document your design choices, trade-offs, and assumptions in a `NOTES.md` file.
    - Highlight areas for future improvement or possible edge cases.
 
 ## External API Details
@@ -54,7 +54,7 @@ We will evaluate your submission based on:
    - Is the implementation efficient for large datasets?
 
 4. **Documentation**:
-   - Are design decisions and assumptions clearly articulated in the `NOTES.txt`.
+   - Are design decisions and assumptions clearly articulated in the `NOTES.md`.
 
 ## Deliverables
 
@@ -63,16 +63,16 @@ We will evaluate your submission based on:
    - Provide test cases that demonstrate your solution's correctness.
 
 2. **Documentation**:
-   - A `NOTES.txt` file explaining your design decisions, trade-offs, and assumptions.
+   - A `NOTES.md` file explaining your design decisions, trade-offs, and assumptions.
 
 3. **Instructions**:
    - Steps to run your solution and execute synchronization.
 
-## How to Use `NOTES.txt`
+## How to Use `NOTES.md`
 
-The `NOTES.txt` file is a critical part of your submission. It helps us understand the reasoning behind your implementation. Use it to describe the **why** behind your solution, not just the **how**.
+The `NOTES.md` file is a critical part of your submission. It helps us understand the reasoning behind your implementation. Use it to describe the **why** behind your solution, not just the **how**.
 
-### What to Include in `NOTES.txt`
+### What to Include in `NOTES.md`
 
 1. **High-Level Overview**:
    - Summarize your approach to solving the synchronization challenge.
