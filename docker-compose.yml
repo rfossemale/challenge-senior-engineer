@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:0-18
+    volumes:
+      - .:/workspaces/nestjs-interview
+    ports:
+      - '3000:3000'
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=nestjs_db
+    depends_on:
+      - postgres
+    networks:
+      - nestjs-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=nestjs_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nestjs-network
+
+networks:
+  nestjs-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
