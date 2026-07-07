@@ -5,6 +5,7 @@ import { SyncModule } from './sync/sync.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TodoList } from './todo_lists/entities/todo_list.entity';
 import { TodoItem } from './todo_lists/entities/todo_item.entity';
+import { InitSchema1751846400000 } from './migrations/1751846400000-InitSchema';
 
 @Module({
   imports: [
@@ -19,8 +20,9 @@ import { TodoItem } from './todo_lists/entities/todo_item.entity';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       entities: [TodoList, TodoItem],
+      migrations: [InitSchema1751846400000],
       migrationsRun: true,
-      synchronize: true,
+      synchronize: false,
       logging: true,
     }),
   ],

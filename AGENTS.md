@@ -10,6 +10,7 @@ Small NestJS 11 + TypeORM + PostgreSQL Todo REST API. See [README.md](README.md)
 - Unit tests: `npm test` — Jest picks up any `*.spec.ts` under [src/](src/) (see `jest` block in [package.json](package.json))
 - E2E tests: `npm run test:e2e` — separate Jest config at [test/jest-e2e.json](test/jest-e2e.json), only matches `*.e2e-spec.ts` in [src/e2e/](src/e2e/)
 - Lint / format: `npm run lint` / `npm run format` — ESLint uses type-checked rules ([eslint.config.mjs](eslint.config.mjs)); `no-floating-promises` is a **warn**, so `await` async calls anyway
+- Seed test data: `npm run seed` — truncates `todo_list` + `todo_item` and inserts fixtures via a standalone TypeORM DataSource ([src/data-source.ts](src/data-source.ts) → [src/seeds/seed.ts](src/seeds/seed.ts)). Requires the same `DB_*` env vars as the app.
 
 The devcontainer auto-runs `npm install && npm run start:dev` on create ([.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)); Postgres is already running as the `postgres` service.
 
