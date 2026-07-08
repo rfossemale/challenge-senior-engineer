@@ -46,7 +46,6 @@ export class ExternalTodoApiClient implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    console.log('Initializing ExternalTodoApiClient');
     const url = this.config
       .get<string>('EXTERNAL_TODO_API_URL', 'http://localhost:3001')
       .trim();
@@ -69,12 +68,6 @@ export class ExternalTodoApiClient implements OnModuleInit {
       this.retryBaseDelayMs,
       Number(this.config.get<string>('SYNC_HTTP_MAX_DELAY_MS', '10000')),
     );
-    console.log(
-      this.baseUrl,
-      this.retryMaxAttempts,
-      this.retryBaseDelayMs,
-      this.retryMaxDelayMs,
-    );
   }
 
   private url(path: string): string {
@@ -87,7 +80,6 @@ export class ExternalTodoApiClient implements OnModuleInit {
   }
 
   listTodoLists(): Promise<RemoteTodoList[]> {
-    console.log(this.url('/todolists'));
     return this.request('GET /todolists', () =>
       firstValueFrom(this.http.get<RemoteTodoList[]>(this.url('/todolists'))),
     ).then((data) => data ?? []);

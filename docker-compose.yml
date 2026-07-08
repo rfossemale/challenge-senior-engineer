@@ -1,24 +1,5 @@
 version: '3.8'
 services:
-  app:
-    image: mcr.microsoft.com/devcontainers/typescript-node:0-18
-    working_dir: /workspaces/nestjs-interview
-    command: sh -c "npm install && npm run start:dev"
-    volumes:
-      - .:/workspaces/nestjs-interview
-    ports:
-      - '3000:3000'
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
-      - DB_DATABASE=nestjs_db
-    depends_on:
-      - postgres
-    networks:
-      - backend-network
-
   postgres:
     image: postgres:16-alpine
     environment:
@@ -31,6 +12,20 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend-network
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:0-18
+    working_dir: /workspaces/nestjs-interview
+    command: sh -c "npm install && npm run start:dev"
+    volumes:
+      - .:/workspaces/nestjs-interview
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+    networks:
+      - backend-network
+
+  
 
 networks:
   backend-network:

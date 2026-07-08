@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { TodoItem } from './todo_lists/entities/todo_item.entity';
 import { TodoList } from './todo_lists/entities/todo_list.entity';
