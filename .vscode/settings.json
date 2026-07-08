@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
   "editor.formatOnPaste": true,
   "editor.formatOnType": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -7,11 +8,10 @@
     "source.fixAll.eslint": "explicit"
   },
   "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 500,
-  "eslint.validate": [
-    "javascript",
-    "typescript"
-  ],
+  "files.autoSaveDelay": 200,
+  "prettier.requireConfig": true,
+  "prettier.useEditorConfig": false,
+  "eslint.validate": ["javascript", "typescript"],
   "eslint.useFlatConfig": true,
   "eslint.run": "onType",
   "[typescript]": {
@@ -24,6 +24,21 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[scss]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "typescript.tsdk": "node_modules/typescript/lib"

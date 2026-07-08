@@ -2,6 +2,8 @@ version: '3.8'
 services:
   app:
     image: mcr.microsoft.com/devcontainers/typescript-node:0-18
+    working_dir: /workspaces/nestjs-interview
+    command: sh -c "npm install && npm run start:dev"
     volumes:
       - .:/workspaces/nestjs-interview
     ports:
@@ -15,7 +17,7 @@ services:
     depends_on:
       - postgres
     networks:
-      - nestjs-network
+      - backend-network
 
   postgres:
     image: postgres:16-alpine
@@ -28,11 +30,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - nestjs-network
+      - backend-network
 
 networks:
-  nestjs-network:
-    driver: bridge
+  backend-network:
+    external: true
 
 volumes:
   postgres_data:

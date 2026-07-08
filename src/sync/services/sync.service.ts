@@ -15,6 +15,7 @@ import {
   SYNC_REPOSITORY,
   type SyncRepository,
 } from '../repositories/sync.repository';
+import { runBounded } from '../util/concurrency';
 import { SyncLockService } from './sync_lock.service';
 
 export interface PushReport {
@@ -75,6 +76,7 @@ export class SyncService {
   private readonly logger = new Logger(SyncService.name);
   private readonly instanceId: string;
   private readonly graceCycles: number;
+  private readonly pushConcurrency: number;
 
   constructor(
     @Inject(SYNC_REPOSITORY) private readonly syncRepo: SyncRepository,
@@ -86,6 +88,21 @@ export class SyncService {
     this.graceCycles = Number(
       config.get<string>('SYNC_DELETE_GRACE_CYCLES', '2'),
     );
+    // Caps how many remote HTTP calls the push phase has in flight at once.
+    // Prevents 429s from the external API when a cycle has to process many
+    // records. Same value re-used across all sections that use runBounded.
+    this.pushConcurrency = Math.max(
+      1,
+      Number(config.get<string>('SYNC_PUSH_CONCURRENCY', '8')),
+    );
+  }
+
+  async test(): Promise<RemoteTodoItem[]> {
+    try {
+      return this.client.listTodoLists();
+    } catch (err) {
+      throw new Error(`Sync test failed: ${(err as Error).message}`);
+    }
   }
 
   async run(): Promise<SyncReport> {
@@ -122,17 +139,25 @@ export class SyncService {
     };
 
     // 1. Locally soft-deleted lists that were ever synced → delete remote.
-    for (const local of await this.syncRepo.findLocallyDeletedLists()) {
-      try {
+    //    Bounded concurrency: at most `pushConcurrency` HTTP calls in flight
+    //    at once (avoids 429 from the external API on large batches).
+    //    Errors are caught by runBounded and forwarded to onError, which
+    //    records them in the report and emits a warn log.
+    const softDeletedLists = await this.syncRepo.findLocallyDeletedLists();
+    await runBounded(
+      softDeletedLists,
+      this.pushConcurrency,
+      async (local) => {
         await this.client.deleteTodoList(local.externalId!);
         await this.syncRepo.clearListExternalId(local.id);
         report.deletedLists++;
-      } catch (err) {
-        report.errors.push(
-          `delete list ${local.id}: ${(err as Error).message}`,
-        );
-      }
-    }
+      },
+      (err, local) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        report.errors.push(`delete list ${local.id}: ${msg}`);
+        this.logger.warn(`delete list ${local.id} failed: ${msg}`);
+      },
+    );
 
     // 2. Brand-new local lists (never synced) → create remotely with items.
     for (const local of await this.syncRepo.findNewLocalListsWithItems()) {

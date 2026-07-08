@@ -1,4 +1,4 @@
-import { Controller, HttpCode, Post } from '@nestjs/common';
+import { Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { SyncReport, SyncService } from '../services/sync.service';
 
 @Controller('sync')
@@ -14,5 +14,11 @@ export class SyncController {
   @HttpCode(200)
   run(): Promise<SyncReport> {
     return this.syncService.run();
+  }
+
+  @Get('status')
+  @HttpCode(200)
+  status() {
+    return this.syncService.test();
   }
 }
