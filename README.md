@@ -1,4 +1,5 @@
 # Mejoras a implementar en la API externa
+
 - Poder hacer sync incremental: --> (evita traer todas las listas e items)
   ejemplo GET /todolists?since=2026-01-01
 
@@ -6,6 +7,7 @@
   ejemplo POST /todolists/{todolistsid}/todo-item/
 
 # Problemas a resolver
+
 Idempotencia. Si una sync falla a la mitad y la reintentás, no debe duplicar entidades.
 
 # nextjs-interview / TodoApi

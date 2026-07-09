@@ -25,6 +25,8 @@ Layering inside each feature is strict: `Controller` → `Service` → TypeORM `
 
 Two resources, nested route: `TodoList` (`/api/todo-lists`) owns `TodoItem` (`/api/todo-lists/:todoListId/todo-items`). The `api` prefix is set globally in [src/main.ts](src/main.ts) — replicate it in any new e2e test with `app.setGlobalPrefix('api')`.
 
+OpenAPI / Swagger is wired in [src/main.ts](src/main.ts) via `@nestjs/swagger`: interactive UI at `http://localhost:3000/api/docs` and the raw spec at `/api/docs-json`. Response schemas are sourced from the TypeORM entities (decorated with `@ApiProperty`) — the controller's return-type contract still points at the plain `interfaces/` types, but Swagger references the entity classes aliased as `TodoListModel` / `TodoItemModel`. Sync responses use the `PushReport` / `PullReport` / `SyncReport` classes exported from [src/sync/services/sync.service.ts](src/sync/services/sync.service.ts) — those are classes (not interfaces) so `@nestjs/swagger` can generate their schema; treat them structurally the same as before.
+
 DB config lives inline in [src/app.module.ts](src/app.module.ts) with `synchronize: true` and `migrationsRun: true` — schema is auto-derived from entity decorators, there are no migration files. Adding/removing entity columns takes effect on next boot; do not hand-write SQL migrations unless you also flip `synchronize` off.
 
 ## Env vars

@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ExternalTodoApiClient } from '../clients/external_todo_api.client';
 import type { RemoteTodoItem, RemoteTodoList } from '../interfaces';
 import {
@@ -18,32 +19,75 @@ import {
 import { runBounded } from '../util/concurrency';
 import { SyncLockService } from './sync_lock.service';
 
-export interface PushReport {
+// Reports are exported as classes (not interfaces) so `@nestjs/swagger`
+// can pick them up as response schemas. As TypeScript types they behave
+// identically to the previous interfaces — callers don't need changes.
+
+export class PushReport {
+  @ApiProperty({ description: 'Lists created on the remote this cycle.' })
   createdLists: number;
+  @ApiProperty({ description: 'Lists patched on the remote this cycle.' })
   updatedLists: number;
+  @ApiProperty({ description: 'Lists deleted on the remote this cycle.' })
   deletedLists: number;
+  @ApiProperty({ description: 'Items patched on the remote this cycle.' })
   updatedItems: number;
+  @ApiProperty({ description: 'Items deleted on the remote this cycle.' })
   deletedItems: number;
+  @ApiProperty({
+    description:
+      'New local items on already-remote lists that could not be pushed because the external API has no POST /todolists/:id/todoitems endpoint yet.',
+  })
   skippedNewItems: number;
+  @ApiProperty({
+    type: [String],
+    description: 'Per-record error messages (non-fatal; cycle continues).',
+  })
   errors: string[];
 }
 
-export interface PullReport {
+export class PullReport {
+  @ApiProperty({ description: 'New local lists created from remote state.' })
   createdLists: number;
+  @ApiProperty({ description: 'Existing local lists reconciled from remote.' })
   updatedLists: number;
+  @ApiProperty({ description: 'New local items created from remote state.' })
   createdItems: number;
+  @ApiProperty({ description: 'Existing local items reconciled from remote.' })
   updatedItems: number;
+  @ApiProperty({
+    description:
+      'Local lists soft-deleted because they exceeded SYNC_DELETE_GRACE_CYCLES consecutive absences from the remote.',
+  })
   softDeletedLists: number;
+  @ApiProperty({ description: 'Local items soft-deleted for the same reason.' })
   softDeletedItems: number;
+  @ApiProperty({
+    type: [String],
+    description: 'Per-record error messages (non-fatal; cycle continues).',
+  })
   errors: string[];
 }
 
-export interface SyncReport {
+export class SyncReport {
+  @ApiProperty({
+    example: false,
+    description:
+      'True when another cycle was already running and the advisory lock was busy. When true, no push/pull work was performed.',
+  })
   skipped: boolean;
+  @ApiPropertyOptional({
+    example: 'lock-busy',
+    description: 'Reason for skipping, when `skipped` is true.',
+  })
   reason?: string;
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
   startedAt?: string;
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
   finishedAt?: string;
+  @ApiPropertyOptional({ type: () => PushReport })
   push?: PushReport;
+  @ApiPropertyOptional({ type: () => PullReport })
   pull?: PullReport;
 }
 
