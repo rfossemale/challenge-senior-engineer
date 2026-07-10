@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -22,7 +23,7 @@ import { TodoItem } from '../../interfaces/todo_item.interface';
 // return-type contract stays on the interface (see AGENTS.md conventions).
 import { TodoItem as TodoItemModel } from '../entities/todo_item.entity';
 import { TodoItemsService } from '../services/todo_items.service';
-import { TodoListsService } from '@todo-lists/services/todo_lists.service';
+import { TodoListsService } from '../services/todo_lists.service';
 
 @ApiTags('todo-items')
 @ApiParam({ name: 'todoListId', type: Number, example: 42 })
@@ -71,10 +72,11 @@ export class TodoItemsController {
   @ApiOperation({
     summary: 'Update an item',
     description:
-      'Note: current implementation `upserts` via save() and will NOT return 404 for missing ids — see AGENTS.md.',
+      'Returns 404 if the parent todo list does not exist. The item id itself still upserts via save() and will NOT 404 for a missing item id — see AGENTS.md.',
   })
   @ApiParam({ name: 'todoItemId', type: Number, example: 101 })
   @ApiOkResponse({ type: TodoItemModel })
+  @ApiNotFoundResponse({ description: 'Parent todo list not found.' })
   async update(
     @Param() param: { todoListId: string; todoItemId: string },
     @Body() dto: UpdateTodoItemDto,

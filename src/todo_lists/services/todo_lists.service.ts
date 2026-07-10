@@ -36,6 +36,9 @@ export class TodoListsService {
   }
 
   async delete(id: number): Promise<void> {
-    await this.todoListRepository.delete(id);
+    if (!(await this.todoListRepository.findOneBy({ id }))) {
+      throw new NotFoundException(`TodoList with id ${id} not found`);
+    }
+    await this.todoListRepository.update(id, { deletedAt: new Date() });
   }
 }

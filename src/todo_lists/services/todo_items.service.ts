@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTodoItemDto } from '../dtos/create-todo_item';
 import { UpdateTodoItemDto } from '../dtos/update-todo_item';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -34,14 +34,28 @@ export class TodoItemsService {
     id: number,
     dto: UpdateTodoItemDto,
   ): Promise<TodoItem> {
-    return await this.todoItemRepository.save({
+    const existing = await this.todoItemRepository.findOneBy({
       id,
       todoListId,
-      ...dto,
-    } as TodoItem);
+    });
+    if (!existing) {
+      throw new NotFoundException(
+        `TodoItem with id ${id} not found in TodoList with id ${todoListId}`,
+      );
+    }
+    const merged = this.todoItemRepository.merge(existing, dto);
+    return await this.todoItemRepository.save(merged);
   }
 
   async delete(todoListId: number, id: number): Promise<void> {
-    await this.todoItemRepository.delete({ id, todoListId });
+    if (!(await this.todoItemRepository.findOneBy({ id, todoListId }))) {
+      throw new NotFoundException(
+        `TodoItem with id ${id} not found in TodoList with id ${todoListId}`,
+      );
+    }
+    await this.todoItemRepository.update(
+      { id, todoListId },
+      { deletedAt: new Date() },
+    );
   }
 }

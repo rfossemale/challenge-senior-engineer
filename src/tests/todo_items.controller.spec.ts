@@ -1,14 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TodoItemsController } from '../todo_lists/controllers/todo_items.controller';
 import { TodoItemsService } from '../todo_lists/services/todo_items.service';
+import { TodoListsService } from '../todo_lists/services/todo_lists.service';
 import { INestApplication } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TodoItem } from '../todo_lists/entities/todo_item.entity';
+import { TodoList } from '../todo_lists/entities/todo_list.entity';
 
 describe('TodoItemsController', () => {
   let app: INestApplication;
   let todoItemsController: TodoItemsController;
   let todoItemRepositoryMock: jest.Mocked<Record<string, jest.Mock>>;
+  let todoListRepositoryMock: jest.Mocked<Record<string, jest.Mock>>;
 
   beforeEach(async () => {
     todoItemRepositoryMock = {
@@ -18,14 +21,27 @@ describe('TodoItemsController', () => {
       delete: jest.fn(),
       create: jest.fn(),
     };
+    todoListRepositoryMock = {
+      find: jest.fn(),
+      findOneBy: jest.fn(),
+      save: jest.fn(),
+      delete: jest.fn(),
+      update: jest.fn(),
+      create: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TodoItemsController],
       providers: [
         TodoItemsService,
+        TodoListsService,
         {
           provide: getRepositoryToken(TodoItem),
           useValue: todoItemRepositoryMock,
+        },
+        {
+          provide: getRepositoryToken(TodoList),
+          useValue: todoListRepositoryMock,
         },
       ],
     }).compile();
@@ -107,6 +123,12 @@ describe('TodoItemsController', () => {
         todoListId: 1,
       };
 
+      // Parent list must exist for the update handler to proceed past the
+      // NotFoundException guard.
+      todoListRepositoryMock.findOneBy.mockResolvedValue({
+        id: 1,
+        name: 'A list',
+      });
       todoItemRepositoryMock.save.mockResolvedValue(updatedTodoItem);
 
       const result = await todoItemsController.update(
