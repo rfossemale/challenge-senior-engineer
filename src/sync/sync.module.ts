@@ -7,11 +7,13 @@ import { SYNC_REPOSITORY } from './repositories/sync.repository';
 import { TypeormSyncRepository } from './repositories/typeorm-sync.repository';
 import { SyncLockService } from './services/sync_lock.service';
 import { SyncService } from './services/sync.service';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
     HttpModule.register({ timeout: 10_000, maxRedirects: 3 }),
     TodoListsModule,
+    EventsModule,
   ],
   controllers: [SyncController],
   providers: [

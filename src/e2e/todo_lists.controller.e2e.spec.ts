@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { TodoListsController } from '../todo_lists/controllers/todo_lists.controller';
 import { TodoListsService } from '../todo_lists/services/todo_lists.service';
 import { TodoList } from '../todo_lists/entities/todo_list.entity';
+import { ChangePublisher } from '../events/events.publisher';
 
 describe('TodoListsController (e2e)', () => {
   let app: INestApplication;
@@ -18,6 +19,7 @@ describe('TodoListsController (e2e)', () => {
       findOneBy: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
+      update: jest.fn(),
       create: jest.fn(),
     };
 
@@ -28,6 +30,13 @@ describe('TodoListsController (e2e)', () => {
         {
           provide: getRepositoryToken(TodoList),
           useValue: todoListRepositoryMock,
+        },
+        {
+          provide: ChangePublisher,
+          useValue: {
+            publishListChange: jest.fn(),
+            publishItemChange: jest.fn(),
+          },
         },
       ],
     }).compile();

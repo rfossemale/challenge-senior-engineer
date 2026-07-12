@@ -4,12 +4,14 @@ import { UpdateTodoListDto } from '../dtos/update-todo_list';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TodoList } from '../entities/todo_list.entity';
+import { ChangePublisher } from '../../events/events.publisher';
 
 @Injectable()
 export class TodoListsService {
   constructor(
     @InjectRepository(TodoList)
     private readonly todoListRepository: Repository<TodoList>,
+    private readonly changePublisher: ChangePublisher,
   ) {}
 
   async all(): Promise<TodoList[]> {
@@ -22,7 +24,9 @@ export class TodoListsService {
 
   async create(dto: CreateTodoListDto): Promise<TodoList> {
     const todoList = this.todoListRepository.create({ name: dto.name });
-    return await this.todoListRepository.save(todoList);
+    const saved = await this.todoListRepository.save(todoList);
+    this.changePublisher.publishListChange('created', saved);
+    return saved;
   }
 
   async update(id: number, dto: UpdateTodoListDto): Promise<TodoList> {
@@ -32,13 +36,23 @@ export class TodoListsService {
       throw new NotFoundException(`TodoList with id ${id} not found`);
     }
 
-    return await this.todoListRepository.save({ ...todoList, ...dto });
+    const saved = await this.todoListRepository.save({ ...todoList, ...dto });
+    this.changePublisher.publishListChange('updated', saved);
+    return saved;
   }
 
   async delete(id: number): Promise<void> {
-    if (!(await this.todoListRepository.findOneBy({ id }))) {
+    const existing = await this.todoListRepository.findOneBy({ id });
+    if (!existing) {
       throw new NotFoundException(`TodoList with id ${id} not found`);
     }
-    await this.todoListRepository.update(id, { deletedAt: new Date() });
+    const deletedAt = new Date();
+    await this.todoListRepository.update(id, { deletedAt });
+    // Publish the entity with the soft-delete marker so subscribers see the
+    // deletedAt field on the wire and can react accordingly.
+    this.changePublisher.publishListChange('deleted', {
+      ...existing,
+      deletedAt,
+    });
   }
 }

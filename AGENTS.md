@@ -21,6 +21,8 @@ Two feature modules:
 - [src/todo_lists/todo_lists.module.ts](src/todo_lists/todo_lists.module.ts) — CRUD API for `TodoList` / `TodoItem`.
 - [src/sync/sync.module.ts](src/sync/sync.module.ts) — bi-directional sync with the external Todo API (contract at [docs/docs/external-api.yaml](docs/docs/external-api.yaml)). Endpoint `POST /api/sync/run` triggers one cycle: `push local → pull remote → reconcile (LWW by updated_at)`. Single-cycle mutex via Postgres advisory lock. Deletes use a grace period (see `SYNC_DELETE_GRACE_CYCLES`). See [src/sync/services/sync.service.ts](src/sync/services/sync.service.ts) for the invariants comment.
 
+Plus a shared [src/events/](src/events/) module (`ChangePublisher` + SSE controller at `GET /api/events/stream`). Both feature modules inject `ChangePublisher` and emit `'created' | 'updated' | 'deleted'` events on every local write. In the sync module only the **pull** phase publishes (that's where local state actually changes externally-visibly); push-only writes stamp metadata and are intentionally silent. Grace-period soft-deletes in the pull phase are also silent for now — the bulk `softDelete*AtThreshold` methods return only a count, so per-row broadcast would require expanding the `SyncRepository` contract (see the TODO in [sync.service.ts](src/sync/services/sync.service.ts)).
+
 Layering inside each feature is strict: `Controller` → `Service` → TypeORM `Repository<Entity>`. Entities in [src/todo_lists/entities/](src/todo_lists/entities/).
 
 Two resources, nested route: `TodoList` (`/api/todo-lists`) owns `TodoItem` (`/api/todo-lists/:todoListId/todo-items`). The `api` prefix is set globally in [src/main.ts](src/main.ts) — replicate it in any new e2e test with `app.setGlobalPrefix('api')`.

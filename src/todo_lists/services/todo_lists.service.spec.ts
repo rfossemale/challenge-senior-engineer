@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TodoListsService } from './todo_lists.service';
 import { TodoList } from '../entities/todo_list.entity';
+import { ChangePublisher } from '../../events/events.publisher';
 
 describe('TodoListsService', () => {
   let service: TodoListsService;
@@ -14,6 +15,7 @@ describe('TodoListsService', () => {
       findOneBy: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
+      update: jest.fn(),
       create: jest.fn(),
     };
 
@@ -23,6 +25,13 @@ describe('TodoListsService', () => {
         {
           provide: getRepositoryToken(TodoList),
           useValue: todoListRepositoryMock,
+        },
+        {
+          provide: ChangePublisher,
+          useValue: {
+            publishListChange: jest.fn(),
+            publishItemChange: jest.fn(),
+          },
         },
       ],
     }).compile();

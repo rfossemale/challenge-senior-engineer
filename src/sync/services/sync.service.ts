@@ -18,6 +18,7 @@ import {
 } from '../repositories/sync.repository';
 import { runBounded } from '../util/concurrency';
 import { SyncLockService } from './sync_lock.service';
+import { ChangePublisher } from '../../events/events.publisher';
 
 // Reports are exported as classes (not interfaces) so `@nestjs/swagger`
 // can pick them up as response schemas. As TypeScript types they behave
@@ -126,6 +127,7 @@ export class SyncService {
     @Inject(SYNC_REPOSITORY) private readonly syncRepo: SyncRepository,
     private readonly client: ExternalTodoApiClient,
     private readonly lock: SyncLockService,
+    private readonly changePublisher: ChangePublisher,
     config: ConfigService,
   ) {
     this.instanceId = config.get<string>('SYNC_SOURCE_ID', 'local-dev');
@@ -341,6 +343,11 @@ export class SyncService {
     report.softDeletedItems = await this.syncRepo.softDeleteItemsAtThreshold(
       this.graceCycles,
     );
+    // TODO: emit 'deleted' change events for the rows soft-deleted above.
+    // The current SyncRepository contract returns only a count from the
+    // threshold sweeps — we'd need it to return the affected entities (or
+    // add a separate lookup) before we can broadcast per-row events. Left
+    // out on purpose so the pull path keeps a single bulk UPDATE per phase.
 
     return report;
   }
@@ -361,12 +368,19 @@ export class SyncService {
       });
       localListId = created.id;
       report.createdLists++;
+      this.changePublisher.publishListChange('created', created);
     } else {
       localListId = existing.id;
       if (remoteIsNewer(remote.updated_at, existing.updatedAt)) {
         const fields = extractRemoteListFields(remote, { name: existing.name });
         await this.syncRepo.markListSynced(existing.id, { name: fields.name });
         report.updatedLists++;
+        // Publish the merged in-memory state — the write above is atomic,
+        // and re-fetching would add one query per reconciled row per cycle.
+        this.changePublisher.publishListChange('updated', {
+          ...existing,
+          name: fields.name,
+        });
       } else {
         await this.syncRepo.markListSynced(existing.id);
       }
@@ -398,6 +412,14 @@ export class SyncService {
         externalId: remote.id,
       });
       report.createdItems++;
+      // Re-fetch to publish the fully materialized row (id, timestamps, …).
+      const created = await this.syncRepo.findItemByExternalId(
+        remote.id,
+        localListId,
+      );
+      if (created) {
+        this.changePublisher.publishItemChange('created', created);
+      }
       return;
     }
 
@@ -411,6 +433,12 @@ export class SyncService {
         completed: fields.completed,
       });
       report.updatedItems++;
+      // Publish the merged in-memory state (see the analogous list branch).
+      this.changePublisher.publishItemChange('updated', {
+        ...existing,
+        description: fields.description,
+        completed: fields.completed,
+      });
     } else {
       await this.syncRepo.markItemSynced(existing.id);
     }

@@ -4,6 +4,7 @@ import { TodoListsService } from '../todo_lists/services/todo_lists.service';
 import { INestApplication } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TodoList } from '../todo_lists/entities/todo_list.entity';
+import { ChangePublisher } from '../events/events.publisher';
 
 describe('TodoListsController', () => {
   let app: INestApplication;
@@ -16,6 +17,7 @@ describe('TodoListsController', () => {
       findOneBy: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
+      update: jest.fn(),
       create: jest.fn(),
     };
 
@@ -26,6 +28,13 @@ describe('TodoListsController', () => {
         {
           provide: getRepositoryToken(TodoList),
           useValue: todoListRepositoryMock,
+        },
+        {
+          provide: ChangePublisher,
+          useValue: {
+            publishListChange: jest.fn(),
+            publishItemChange: jest.fn(),
+          },
         },
       ],
     }).compile();
