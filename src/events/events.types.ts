@@ -4,11 +4,14 @@ import { TodoItem } from '../todo_lists/entities/todo_item.entity';
 export const CHANGE_EVENT = 'entity.changed';
 
 export type ChangeOperation = 'created' | 'updated' | 'deleted';
-export type ChangeEntity = 'list' | 'item';
+export type ChangeEntity = 'list' | 'item' | 'items';
 
-export interface ChangeEvent {
-  entity: ChangeEntity;
+interface BaseChangeEvent {
   operation: ChangeOperation;
-  resource: TodoList | TodoItem;
   emittedAt: string;
 }
+
+export type ChangeEvent =
+  | (BaseChangeEvent & { entity: 'list'; resource: TodoList })
+  | (BaseChangeEvent & { entity: 'item'; resource: TodoItem })
+  | (BaseChangeEvent & { entity: 'items'; resource: TodoItem[] });

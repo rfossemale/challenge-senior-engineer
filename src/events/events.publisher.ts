@@ -29,6 +29,15 @@ export class ChangePublisher {
     });
   }
 
+  publishItemsChange(operation: ChangeOperation, items: TodoItem[]): void {
+    this.emit({
+      entity: 'items',
+      operation,
+      resource: items,
+      emittedAt: new Date().toISOString(),
+    });
+  }
+
   private emit(event: ChangeEvent): void {
     this.eventEmitter.emit(CHANGE_EVENT, event);
   }

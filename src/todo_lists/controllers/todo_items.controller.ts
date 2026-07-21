@@ -68,6 +68,14 @@ export class TodoItemsController {
     return this.todoItemsService.create(Number(param.todoListId), dto);
   }
 
+  @Put('/complete-all')
+  @ApiOperation({ summary: 'Mark all items in a todo list as completed' })
+  @ApiParam({ name: 'todoListId', type: Number, example: 42 })
+  @ApiNoContentResponse({ description: 'All items were marked as completed.' })
+  completeAll(@Param() param: { todoListId: string }): Promise<TodoItem[]> {
+    return this.todoItemsService.completeAll(Number(param.todoListId));
+  }
+
   @Put('/:todoItemId')
   @ApiOperation({
     summary: 'Update an item',

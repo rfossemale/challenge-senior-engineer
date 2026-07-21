@@ -67,6 +67,29 @@ export class TodoItemsService {
     await this.todoItemRepository.update({ id, todoListId }, { deletedAt });
     // Publish the entity with the soft-delete marker so subscribers see the
     // deletedAt field on the wire and can react accordingly.
-    this.changePublisher.publishItemChange('deleted', { ...existing, deletedAt });
+    this.changePublisher.publishItemChange('deleted', {
+      ...existing,
+      deletedAt,
+    });
+  }
+  async completeAll(todoListId: number): Promise<TodoItem[]> {
+    const itemsChanged = await this.todoItemRepository.find({
+      where: { todoListId, completed: false },
+    });
+    if (itemsChanged && itemsChanged.length === 0) {
+      return [];
+    }
+    const timestamp = new Date().toISOString();
+    await this.todoItemRepository.update(
+      { todoListId, completed: false },
+      { completed: true, updatedAt: timestamp },
+    );
+    const updated = itemsChanged.map((item) => ({
+      ...item,
+      completed: true,
+      updatedAt: new Date(timestamp),
+    }));
+    this.changePublisher.publishItemsChange('updated', updated);
+    return updated;
   }
 }
