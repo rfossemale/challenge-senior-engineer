@@ -153,12 +153,17 @@ describe('TodoListsController (e2e)', () => {
   });
 
   describe('DELETE /api/todo-lists/:todoListId', () => {
-    it('deletes a todo list', async () => {
-      todoListRepositoryMock.delete.mockResolvedValue({ affected: 1 });
+    it('soft-deletes a todo list', async () => {
+      const existingTodoList = { id: 1, name: 'Shopping List' };
+      todoListRepositoryMock.findOneBy.mockResolvedValue(existingTodoList);
+      todoListRepositoryMock.update.mockResolvedValue({ affected: 1 });
 
       await request(httpServer).delete('/api/todo-lists/1').expect(200);
 
-      expect(todoListRepositoryMock.delete).toHaveBeenCalledWith(1);
+      expect(todoListRepositoryMock.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ deletedAt: expect.any(Date) }),
+      );
     });
   });
 });

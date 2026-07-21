@@ -126,6 +126,12 @@ describe('TodoItemsController', () => {
   describe('update', () => {
     it('should update an existing todo item', async () => {
       const updateDto = { description: 'Updated task', completed: true };
+      const existingTodoItem = {
+        id: 1,
+        description: 'Buy milk',
+        completed: false,
+        todoListId: 1,
+      };
       const updatedTodoItem = {
         id: 1,
         description: 'Updated task',
@@ -139,6 +145,8 @@ describe('TodoItemsController', () => {
         id: 1,
         name: 'A list',
       });
+      // Service also fetches the existing item before merging + saving.
+      todoItemRepositoryMock.findOneBy.mockResolvedValue(existingTodoItem);
       todoItemRepositoryMock.save.mockResolvedValue(updatedTodoItem);
 
       const result = await todoItemsController.update(
@@ -151,13 +159,22 @@ describe('TodoItemsController', () => {
   });
 
   describe('delete', () => {
-    it('should delete a todo item', async () => {
-      todoItemRepositoryMock.delete.mockResolvedValue({ affected: 1 });
-      await todoItemsController.delete({ todoListId: 1, todoItemId: 1 });
-      expect(todoItemRepositoryMock.delete).toHaveBeenCalledWith({
+    it('should soft-delete a todo item', async () => {
+      const existingTodoItem = {
         id: 1,
+        description: 'Buy milk',
+        completed: false,
         todoListId: 1,
-      });
+      };
+      todoItemRepositoryMock.findOneBy.mockResolvedValue(existingTodoItem);
+      todoItemRepositoryMock.update.mockResolvedValue({ affected: 1 });
+
+      await todoItemsController.delete({ todoListId: 1, todoItemId: 1 });
+
+      expect(todoItemRepositoryMock.update).toHaveBeenCalledWith(
+        { id: 1, todoListId: 1 },
+        expect.objectContaining({ deletedAt: expect.any(Date) }),
+      );
     });
   });
 });

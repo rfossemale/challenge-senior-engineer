@@ -126,12 +126,25 @@ describe('TodoListsService', () => {
   });
 
   describe('delete', () => {
-    it('delegates deletion to the repository', async () => {
-      todoListRepositoryMock.delete.mockResolvedValue({ affected: 1 });
+    it('soft-deletes the existing todo list by stamping deletedAt', async () => {
+      const existingTodoList = { id: 1, name: 'Shopping List' };
+      todoListRepositoryMock.findOneBy.mockResolvedValue(existingTodoList);
+      todoListRepositoryMock.update.mockResolvedValue({ affected: 1 });
 
       await service.delete(1);
 
-      expect(todoListRepositoryMock.delete).toHaveBeenCalledWith(1);
+      expect(todoListRepositoryMock.findOneBy).toHaveBeenCalledWith({ id: 1 });
+      expect(todoListRepositoryMock.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ deletedAt: expect.any(Date) }),
+      );
+    });
+
+    it('throws NotFoundException when the todo list does not exist', async () => {
+      todoListRepositoryMock.findOneBy.mockResolvedValue(null);
+
+      await expect(service.delete(999)).rejects.toThrow(NotFoundException);
+      expect(todoListRepositoryMock.update).not.toHaveBeenCalled();
     });
   });
 });
